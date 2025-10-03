@@ -83,15 +83,8 @@ endif()
 
 set(LIBWAKU_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 set(LIBWAKU_NAMES libwaku.so libwaku.dylib libwaku.dll waku.dll)
-find_library(LIBWAKU_PATH
-    NAMES ${LIBWAKU_NAMES}
-    PATHS ${LIBWAKU_DIR}
-    NO_DEFAULT_PATH
-)
-
-if(NOT LIBWAKU_PATH)
-    message(WARNING "libwaku not found in lib/. Build it via build_libwaku.sh before linking.")
-endif()
+# Always add lib directory and try to link -lwaku; also keep optional direct path if present
+find_library(LIBWAKU_PATH NAMES ${LIBWAKU_NAMES} PATHS ${LIBWAKU_DIR} NO_DEFAULT_PATH)
 
 set(PLUGIN_SOURCES
     waku_module_plugin.cpp
@@ -123,7 +116,10 @@ target_link_libraries(waku_module_plugin PRIVATE
     Qt${QT_VERSION_MAJOR}::RemoteObjects
 )
 if(LIBWAKU_PATH)
+    # Link directly to the found libwaku path
     target_link_libraries(waku_module_plugin PRIVATE ${LIBWAKU_PATH})
+else()
+    message(WARNING "libwaku not found in lib/. Build or provide it before linking.")
 endif()
 
 target_include_directories(waku_module_plugin PRIVATE
@@ -141,6 +137,8 @@ set_target_properties(waku_module_plugin PROPERTIES
     SKIP_BUILD_RPATH FALSE)
 
 if(APPLE)
+    # Allow unresolved symbols at link time; libwaku will be provided at runtime
+    target_link_options(waku_module_plugin PRIVATE -undefined dynamic_lookup)
     set_target_properties(waku_module_plugin PROPERTIES
         INSTALL_RPATH "@loader_path"
         INSTALL_NAME_DIR "@rpath"
