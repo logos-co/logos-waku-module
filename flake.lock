@@ -1,0 +1,81 @@
+{
+  "nodes": {
+    "logos-cpp-sdk": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1759258607,
+        "narHash": "sha256-KoOkRixtfYZ26dw5d4jitgBcIDH1aMGBBDOQneddYyc=",
+        "owner": "logos-co",
+        "repo": "logos-cpp-sdk",
+        "rev": "65aa4a1b24692802e618b3ef0d7c4e320f5f0d99",
+        "type": "github"
+      },
+      "original": {
+        "owner": "logos-co",
+        "repo": "logos-cpp-sdk",
+        "rev": "65aa4a1b24692802e618b3ef0d7c4e320f5f0d99",
+        "type": "github"
+      }
+    },
+    "logos-liblogos": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1759344235,
+        "narHash": "sha256-l52IjH4p5F5S71nNF9fs+mgnpLSJKVJkMeZc25GAFaI=",
+        "owner": "logos-co",
+        "repo": "logos-liblogos",
+        "rev": "49e9dfaaf793d3a60124abf3d9f830e5c63a0c3e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "logos-co",
+        "repo": "logos-liblogos",
+        "rev": "49e9dfaaf793d3a60124abf3d9f830e5c63a0c3e",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1759381078,
+        "narHash": "sha256-gTrEEp5gEspIcCOx9PD8kMaF1iEmfBcTbO0Jag2QhQs=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "7df7ff7d8e00218376575f0acdcc5d66741351ee",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nwaku": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1744399578,
+        "narHash": "sha256-g9n6oxEQEpKEwszdaNIeaOtuetfEdaN5tvwp0sj6aOU=",
+        "owner": "iurimatias",
+        "repo": "nwaku",
+        "rev": "9bc4cb98a08588b16047e8d44c942760674d38b1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "iurimatias",
+        "repo": "nwaku",
+        "rev": "9bc4cb98a08588b16047e8d44c942760674d38b1",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "logos-cpp-sdk": "logos-cpp-sdk",
+        "logos-liblogos": "logos-liblogos",
+        "nixpkgs": "nixpkgs",
+        "nwaku": "nwaku"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
