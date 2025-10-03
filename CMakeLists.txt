@@ -7,9 +7,19 @@ set(CMAKE_AUTOMOC ON)
 
 option(LOGOS_WAKU_MODULE_USE_VENDOR "Force use of vendored Logos dependencies" OFF)
 
-set(_parent_liblogos "${CMAKE_SOURCE_DIR}/../logos-liblogos")
-set(_parent_cpp_sdk "${CMAKE_SOURCE_DIR}/../logos-cpp-sdk")
+# Detect if we're being built as a subdirectory (e.g., from logos-core-poc)
+# If CMAKE_SOURCE_DIR != CMAKE_CURRENT_SOURCE_DIR, we're a subdirectory
 set(_use_vendor ${LOGOS_WAKU_MODULE_USE_VENDOR})
+if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    # Being built as part of a larger project, use vendor
+    set(_use_vendor ON)
+    message(STATUS "Detected subdirectory build, using vendored dependencies")
+endif()
+
+# Detect if we're in standalone mode
+set(_parent_liblogos "${CMAKE_CURRENT_SOURCE_DIR}/../logos-liblogos")
+set(_parent_cpp_sdk "${CMAKE_CURRENT_SOURCE_DIR}/../logos-cpp-sdk")
+
 if(NOT _use_vendor)
     if(NOT EXISTS "${_parent_liblogos}/interface.h" OR NOT EXISTS "${_parent_cpp_sdk}/cpp/logos_api.h")
         set(_use_vendor ON)
@@ -17,8 +27,8 @@ if(NOT _use_vendor)
 endif()
 
 if(_use_vendor)
-    set(LOGOS_LIBLOGOS_ROOT "${CMAKE_SOURCE_DIR}/vendor/logos-liblogos")
-    set(LOGOS_CPP_SDK_ROOT "${CMAKE_SOURCE_DIR}/vendor/logos-cpp-sdk")
+    set(LOGOS_LIBLOGOS_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/logos-liblogos")
+    set(LOGOS_CPP_SDK_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/logos-cpp-sdk")
 else()
     set(LOGOS_LIBLOGOS_ROOT "${_parent_liblogos}")
     set(LOGOS_CPP_SDK_ROOT "${_parent_cpp_sdk}")
@@ -32,7 +42,7 @@ if(NOT EXISTS "${LOGOS_CPP_SDK_ROOT}/cpp/logos_api.h")
     message(FATAL_ERROR "logos-cpp-sdk not found. Run git submodule update --init --recursive.")
 endif()
 
-set(NWAKU_ROOT "${CMAKE_SOURCE_DIR}/vendor/nwaku")
+set(NWAKU_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/nwaku")
 if(NOT EXISTS "${NWAKU_ROOT}/Makefile")
     message(FATAL_ERROR "nwaku vendor not found. Run git submodule update --init --recursive.")
 endif()
@@ -63,13 +73,13 @@ if(NOT TARGET cpp_generator_build)
     )
 endif()
 
-add_custom_target(run_cpp_generator_waku
-    COMMAND "${CPP_GENERATOR}" --metadata "${METADATA_JSON}" --module-dir "${PLUGINS_OUTPUT_DIR}"
-    WORKING_DIRECTORY "${LOGOS_DEPS_ROOT}"
-    COMMENT "Running logos-cpp-generator on ${METADATA_JSON} with module-dir ${PLUGINS_OUTPUT_DIR}"
-    VERBATIM
-)
-add_dependencies(run_cpp_generator_waku cpp_generator_build)
+#add_custom_target(run_cpp_generator_waku
+#    COMMAND "${CPP_GENERATOR}" --metadata "${METADATA_JSON}" --module-dir "${PLUGINS_OUTPUT_DIR}"
+#    WORKING_DIRECTORY "${LOGOS_DEPS_ROOT}"
+#    COMMENT "Running logos-cpp-generator on ${METADATA_JSON} with module-dir ${PLUGINS_OUTPUT_DIR}"
+#    VERBATIM
+#)
+#add_dependencies(run_cpp_generator_waku cpp_generator_build)
 
 set(LIBWAKU_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 set(LIBWAKU_NAMES libwaku.so libwaku.dylib libwaku.dll waku.dll)
@@ -106,7 +116,7 @@ add_library(waku_module_plugin SHARED ${PLUGIN_SOURCES})
 set_target_properties(waku_module_plugin PROPERTIES
     PREFIX "")
 
-add_dependencies(waku_module_plugin run_cpp_generator_waku)
+# add_dependencies(waku_module_plugin run_cpp_generator_waku)
 
 target_link_libraries(waku_module_plugin PRIVATE
     Qt${QT_VERSION_MAJOR}::Core
