@@ -1,7 +1,6 @@
 [submodule "vendor/nwaku"]
 	path = vendor/nwaku
-	url = https://github.com/iurimatias/nwaku.git
-	branch = template_fix
+	url = https://github.com/nwaku/nwaku.git
 [submodule "vendor/logos-liblogos"]
 	path = vendor/logos-liblogos
 	url = git@github.com:logos-co/logos-liblogos.git
