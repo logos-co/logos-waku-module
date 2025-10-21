@@ -7,48 +7,75 @@ set(CMAKE_AUTOMOC ON)
 
 option(LOGOS_WAKU_MODULE_USE_VENDOR "Force use of vendored Logos dependencies" OFF)
 
-# Detect if we're being built as a subdirectory (e.g., from logos-core-poc)
-# If CMAKE_SOURCE_DIR != CMAKE_CURRENT_SOURCE_DIR, we're a subdirectory
-set(_use_vendor ${LOGOS_WAKU_MODULE_USE_VENDOR})
-if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    # Being built as part of a larger project, use vendor
-    set(_use_vendor ON)
-    message(STATUS "Detected subdirectory build, using vendored dependencies")
-endif()
-
-# Detect if we're in standalone mode
-set(_parent_liblogos "${CMAKE_CURRENT_SOURCE_DIR}/../logos-liblogos")
-set(_parent_cpp_sdk "${CMAKE_CURRENT_SOURCE_DIR}/../logos-cpp-sdk")
-
-if(NOT _use_vendor)
-    if(NOT EXISTS "${_parent_liblogos}/interface.h" OR NOT EXISTS "${_parent_cpp_sdk}/cpp/logos_api.h")
-        set(_use_vendor ON)
+# Allow override from environment or command line
+if(NOT DEFINED LOGOS_LIBLOGOS_ROOT)
+    set(_parent_liblogos "${CMAKE_CURRENT_SOURCE_DIR}/../logos-liblogos")
+    set(_use_vendor ${LOGOS_WAKU_MODULE_USE_VENDOR})
+    if(NOT _use_vendor)
+        if(NOT EXISTS "${_parent_liblogos}/interface.h")
+            set(_use_vendor ON)
+        endif()
+    endif()
+    if(_use_vendor)
+        set(LOGOS_LIBLOGOS_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/logos-liblogos")
+    else()
+        set(LOGOS_LIBLOGOS_ROOT "${_parent_liblogos}")
     endif()
 endif()
 
-if(_use_vendor)
-    set(LOGOS_LIBLOGOS_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/logos-liblogos")
-    set(LOGOS_CPP_SDK_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/logos-cpp-sdk")
-else()
-    set(LOGOS_LIBLOGOS_ROOT "${_parent_liblogos}")
-    set(LOGOS_CPP_SDK_ROOT "${_parent_cpp_sdk}")
+if(NOT DEFINED LOGOS_CPP_SDK_ROOT)
+    set(_parent_cpp_sdk "${CMAKE_CURRENT_SOURCE_DIR}/../logos-cpp-sdk")
+    set(_use_vendor ${LOGOS_WAKU_MODULE_USE_VENDOR})
+    if(NOT _use_vendor)
+        if(NOT EXISTS "${_parent_cpp_sdk}/cpp/logos_api.h")
+            set(_use_vendor ON)
+        endif()
+    endif()
+    if(_use_vendor)
+        set(LOGOS_CPP_SDK_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/logos-cpp-sdk")
+    else()
+        set(LOGOS_CPP_SDK_ROOT "${_parent_cpp_sdk}")
+    endif()
 endif()
 
-if(NOT EXISTS "${LOGOS_LIBLOGOS_ROOT}/interface.h")
-    message(FATAL_ERROR "logos-liblogos not found. Run git submodule update --init --recursive.")
+# Check if dependencies are available (support both source and installed layouts)
+set(_liblogos_found FALSE)
+if(EXISTS "${LOGOS_LIBLOGOS_ROOT}/interface.h")
+    set(_liblogos_found TRUE)
+    set(_liblogos_is_source TRUE)
+elseif(EXISTS "${LOGOS_LIBLOGOS_ROOT}/include/interface.h")
+    set(_liblogos_found TRUE)
+    set(_liblogos_is_source FALSE)
 endif()
 
-if(NOT EXISTS "${LOGOS_CPP_SDK_ROOT}/cpp/logos_api.h")
-    message(FATAL_ERROR "logos-cpp-sdk not found. Run git submodule update --init --recursive.")
+set(_cpp_sdk_found FALSE)
+if(EXISTS "${LOGOS_CPP_SDK_ROOT}/cpp/logos_api.h")
+    set(_cpp_sdk_found TRUE)
+    set(_cpp_sdk_is_source TRUE)
+elseif(EXISTS "${LOGOS_CPP_SDK_ROOT}/include/logos_api.h")
+    set(_cpp_sdk_found TRUE)
+    set(_cpp_sdk_is_source FALSE)
+endif()
+
+if(NOT _liblogos_found)
+    message(FATAL_ERROR "logos-liblogos not found at ${LOGOS_LIBLOGOS_ROOT}. "
+                        "Set LOGOS_LIBLOGOS_ROOT or run git submodule update --init --recursive.")
+endif()
+
+if(NOT _cpp_sdk_found)
+    message(FATAL_ERROR "logos-cpp-sdk not found at ${LOGOS_CPP_SDK_ROOT}. "
+                        "Set LOGOS_CPP_SDK_ROOT or run git submodule update --init --recursive.")
 endif()
 
 set(NWAKU_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/nwaku")
 if(NOT EXISTS "${NWAKU_ROOT}/Makefile")
-    message(FATAL_ERROR "nwaku vendor not found. Run git submodule update --init --recursive.")
+    message(WARNING "nwaku vendor not found. You may need to run git submodule update --init --recursive if building libwaku from source.")
 endif()
 
+# Root that contains the vendored dependencies (logos-core checkout or script vendor directory)
 get_filename_component(LOGOS_DEPS_ROOT "${LOGOS_CPP_SDK_ROOT}" DIRECTORY)
 
+# Find Qt RemoteObjects (needed for LogosAPI)
 if(NOT DEFINED QT_VERSION_MAJOR)
     find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core RemoteObjects)
     if(Qt6_FOUND)
@@ -59,62 +86,104 @@ if(NOT DEFINED QT_VERSION_MAJOR)
 endif()
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core RemoteObjects)
 
-set(CPP_GENERATOR_BUILD_DIR "${LOGOS_DEPS_ROOT}/build/cpp-generator")
-set(CPP_GENERATOR "${CPP_GENERATOR_BUILD_DIR}/bin/logos-cpp-generator")
+# Run Logos C++ generator on metadata before compilation
 set(METADATA_JSON "${CMAKE_CURRENT_SOURCE_DIR}/metadata.json")
 set(PLUGINS_OUTPUT_DIR "${CMAKE_BINARY_DIR}/modules")
 
-if(NOT TARGET cpp_generator_build)
-    add_custom_target(cpp_generator_build
-        COMMAND bash "${LOGOS_CPP_SDK_ROOT}/cpp-generator/compile.sh"
+# Try to find the generator binary
+if(_cpp_sdk_is_source)
+    # Source layout: build the generator
+    set(CPP_GENERATOR_BUILD_DIR "${LOGOS_DEPS_ROOT}/build/cpp-generator")
+    set(CPP_GENERATOR "${CPP_GENERATOR_BUILD_DIR}/bin/logos-cpp-generator")
+    
+    if(NOT TARGET cpp_generator_build)
+        add_custom_target(cpp_generator_build
+            COMMAND bash "${LOGOS_CPP_SDK_ROOT}/cpp-generator/compile.sh"
+            WORKING_DIRECTORY "${LOGOS_DEPS_ROOT}"
+            COMMENT "Building logos-cpp-generator via ${LOGOS_CPP_SDK_ROOT}/cpp-generator/compile.sh"
+            VERBATIM
+        )
+    endif()
+    
+    add_custom_target(run_cpp_generator_waku
+        COMMAND "${CPP_GENERATOR}" --metadata "${METADATA_JSON}" --module-dir "${PLUGINS_OUTPUT_DIR}"
         WORKING_DIRECTORY "${LOGOS_DEPS_ROOT}"
-        COMMENT "Building logos-cpp-generator via ${LOGOS_CPP_SDK_ROOT}/cpp-generator/compile.sh"
+        COMMENT "Running logos-cpp-generator on ${METADATA_JSON} with module-dir ${PLUGINS_OUTPUT_DIR}"
+        VERBATIM
+    )
+    add_dependencies(run_cpp_generator_waku cpp_generator_build)
+else()
+    # Installed layout: use the generator from the install path
+    find_program(CPP_GENERATOR logos-cpp-generator PATHS ${LOGOS_CPP_SDK_ROOT}/bin NO_DEFAULT_PATH REQUIRED)
+    
+    add_custom_target(run_cpp_generator_waku
+        COMMAND "${CPP_GENERATOR}" --metadata "${METADATA_JSON}" --module-dir "${PLUGINS_OUTPUT_DIR}"
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+        COMMENT "Running logos-cpp-generator on ${METADATA_JSON} with module-dir ${PLUGINS_OUTPUT_DIR}"
         VERBATIM
     )
 endif()
-
-#add_custom_target(run_cpp_generator_waku
-#    COMMAND "${CPP_GENERATOR}" --metadata "${METADATA_JSON}" --module-dir "${PLUGINS_OUTPUT_DIR}"
-#    WORKING_DIRECTORY "${LOGOS_DEPS_ROOT}"
-#    COMMENT "Running logos-cpp-generator on ${METADATA_JSON} with module-dir ${PLUGINS_OUTPUT_DIR}"
-#    VERBATIM
-#)
-#add_dependencies(run_cpp_generator_waku cpp_generator_build)
 
 set(LIBWAKU_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 set(LIBWAKU_NAMES libwaku.so libwaku.dylib libwaku.dll waku.dll)
 # Always add lib directory and try to link -lwaku; also keep optional direct path if present
 find_library(LIBWAKU_PATH NAMES ${LIBWAKU_NAMES} PATHS ${LIBWAKU_DIR} NO_DEFAULT_PATH)
 
+# Plugin sources
 set(PLUGIN_SOURCES
     waku_module_plugin.cpp
     waku_module_plugin.h
     waku_module_interface.h
-    ${LOGOS_LIBLOGOS_ROOT}/interface.h
-    ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api.cpp
-    ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api.h
-    ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api_client.cpp
-    ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api_client.h
-    ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api_consumer.cpp
-    ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api_consumer.h
-    ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api_provider.cpp
-    ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api_provider.h
-    ${LOGOS_CPP_SDK_ROOT}/cpp/token_manager.cpp
-    ${LOGOS_CPP_SDK_ROOT}/cpp/token_manager.h
-    ${LOGOS_CPP_SDK_ROOT}/cpp/module_proxy.cpp
-    ${LOGOS_CPP_SDK_ROOT}/cpp/module_proxy.h
 )
 
+# Add liblogos interface header
+if(_liblogos_is_source)
+    list(APPEND PLUGIN_SOURCES ${LOGOS_LIBLOGOS_ROOT}/interface.h)
+else()
+    list(APPEND PLUGIN_SOURCES ${LOGOS_LIBLOGOS_ROOT}/include/interface.h)
+endif()
+
+# Add SDK sources (only if source layout, installed layout uses the library)
+if(_cpp_sdk_is_source)
+    list(APPEND PLUGIN_SOURCES
+        ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api.cpp
+        ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api.h
+        ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api_client.cpp
+        ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api_client.h
+        ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api_consumer.cpp
+        ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api_consumer.h
+        ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api_provider.cpp
+        ${LOGOS_CPP_SDK_ROOT}/cpp/logos_api_provider.h
+        ${LOGOS_CPP_SDK_ROOT}/cpp/token_manager.cpp
+        ${LOGOS_CPP_SDK_ROOT}/cpp/token_manager.h
+        ${LOGOS_CPP_SDK_ROOT}/cpp/module_proxy.cpp
+        ${LOGOS_CPP_SDK_ROOT}/cpp/module_proxy.h
+    )
+endif()
+
+# Create the plugin library
 add_library(waku_module_plugin SHARED ${PLUGIN_SOURCES})
+
+# Set output name without lib prefix
 set_target_properties(waku_module_plugin PROPERTIES
     PREFIX "")
 
-# add_dependencies(waku_module_plugin run_cpp_generator_waku)
+# Ensure generator runs before building the plugin
+add_dependencies(waku_module_plugin run_cpp_generator_waku)
 
-target_link_libraries(waku_module_plugin PRIVATE
-    Qt${QT_VERSION_MAJOR}::Core
+# Link Qt libraries
+target_link_libraries(waku_module_plugin PRIVATE 
+    Qt${QT_VERSION_MAJOR}::Core 
     Qt${QT_VERSION_MAJOR}::RemoteObjects
 )
+
+# Link SDK library if using installed layout
+if(NOT _cpp_sdk_is_source)
+    find_library(LOGOS_SDK_LIB logos_sdk PATHS ${LOGOS_CPP_SDK_ROOT}/lib NO_DEFAULT_PATH REQUIRED)
+    target_link_libraries(waku_module_plugin PRIVATE ${LOGOS_SDK_LIB})
+endif()
+
+# Link libwaku if found
 if(LIBWAKU_PATH)
     # Link directly to the found libwaku path
     target_link_libraries(waku_module_plugin PRIVATE ${LIBWAKU_PATH})
@@ -122,13 +191,27 @@ else()
     message(WARNING "libwaku not found in lib/. Build or provide it before linking.")
 endif()
 
+# Include directories
 target_include_directories(waku_module_plugin PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${LIBWAKU_DIR}
-    ${LOGOS_LIBLOGOS_ROOT}
-    ${LOGOS_CPP_SDK_ROOT}/cpp
-    ${LOGOS_CPP_SDK_ROOT}/cpp/generated
 )
+
+# Add include directories based on layout type
+if(_liblogos_is_source)
+    target_include_directories(waku_module_plugin PRIVATE ${LOGOS_LIBLOGOS_ROOT})
+else()
+    target_include_directories(waku_module_plugin PRIVATE ${LOGOS_LIBLOGOS_ROOT}/include)
+endif()
+
+if(_cpp_sdk_is_source)
+    target_include_directories(waku_module_plugin PRIVATE 
+        ${LOGOS_CPP_SDK_ROOT}/cpp
+        ${LOGOS_CPP_SDK_ROOT}/cpp/generated
+    )
+else()
+    target_include_directories(waku_module_plugin PRIVATE ${LOGOS_CPP_SDK_ROOT}/include)
+endif()
 
 set_target_properties(waku_module_plugin PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/modules"

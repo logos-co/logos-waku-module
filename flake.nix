@@ -19,7 +19,7 @@
     {
       packages = forAllSystems ({ pkgs, logosSdk, logosLiblogos }: {
         default = pkgs.stdenv.mkDerivation rec {
-          pname = "logos-capability-module";
+          pname = "logos-waku-module";
           version = "1.0.0";
           
           src = ./.;
@@ -42,15 +42,21 @@
             "-GNinja"
             "-DLOGOS_CPP_SDK_ROOT=${logosSdk}"
             "-DLOGOS_LIBLOGOS_ROOT=${logosLiblogos}"
-            "-DLOGOS_CAPABILITY_MODULE_USE_VENDOR=OFF"
+            "-DLOGOS_WAKU_MODULE_USE_VENDOR=OFF"
           ];
           
           # Set environment variables for CMake to find the dependencies
           LOGOS_CPP_SDK_ROOT = "${logosSdk}";
           LOGOS_LIBLOGOS_ROOT = "${logosLiblogos}";
           
+          # Copy libwaku.so to the result directory
+          postInstall = ''
+            mkdir -p $out/lib/logos/modules
+            cp $src/lib/libwaku.so $out/lib/logos/modules/
+          '';
+          
           meta = with pkgs.lib; {
-            description = "Logos Capability Module - Coordinates permissions between modules";
+            description = "Logos Waku Module - Provides Waku network communication capabilities";
             platforms = platforms.unix;
           };
         };
@@ -73,7 +79,7 @@
           shellHook = ''
             export LOGOS_CPP_SDK_ROOT="${logosSdk}"
             export LOGOS_LIBLOGOS_ROOT="${logosLiblogos}"
-            echo "Logos Capability Module development environment"
+            echo "Logos Waku Module development environment"
             echo "LOGOS_CPP_SDK_ROOT: $LOGOS_CPP_SDK_ROOT"
             echo "LOGOS_LIBLOGOS_ROOT: $LOGOS_LIBLOGOS_ROOT"
           '';
