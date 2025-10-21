@@ -49,10 +49,17 @@
           LOGOS_CPP_SDK_ROOT = "${logosSdk}";
           LOGOS_LIBLOGOS_ROOT = "${logosLiblogos}";
           
-          # Copy libwaku.so to the result directory
+          # Copy libwaku library (dylib or so) to the result directory
           postInstall = ''
             mkdir -p $out/lib/logos/modules
-            cp $src/lib/libwaku.so $out/lib/logos/modules/
+            # Copy whichever library file is available (.dylib for macOS, .so for Linux)
+            if [ -f $src/lib/libwaku.dylib ]; then
+              cp $src/lib/libwaku.dylib $out/lib/logos/modules/
+            elif [ -f $src/lib/libwaku.so ]; then
+              cp $src/lib/libwaku.so $out/lib/logos/modules/
+            else
+              echo "Warning: No libwaku library found in $src/lib/"
+            fi
           '';
           
           meta = with pkgs.lib; {
