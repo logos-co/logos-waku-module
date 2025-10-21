@@ -78,7 +78,26 @@ echo "Building libwaku with ${JOBS} jobs..."
 echo "Copying libwaku artifacts into ${LIB_DIR}"
 shopt -s nullglob
 for artifact in "${VENDOR_DIR}/build"/libwaku.*; do
-    cp "${artifact}" "${LIB_DIR}/$(basename "${artifact}")"
+    basename_artifact=$(basename "${artifact}")
+    # Detect platform and rename library file accordingly
+    case "$(uname -s)" in
+        Darwin*)
+            # macOS - rename .so to .dylib
+            if [[ "${basename_artifact}" == "libwaku.so" ]]; then
+                cp "${artifact}" "${LIB_DIR}/libwaku.dylib"
+            else
+                cp "${artifact}" "${LIB_DIR}/${basename_artifact}"
+            fi
+            ;;
+        Linux*)
+            # Linux - keep .so extension
+            cp "${artifact}" "${LIB_DIR}/${basename_artifact}"
+            ;;
+        *)
+            # Other platforms - keep original name
+            cp "${artifact}" "${LIB_DIR}/${basename_artifact}"
+            ;;
+    esac
 done
 shopt -u nullglob
 

@@ -2,9 +2,6 @@
 build
 .deps/
 vendor/*
-lib/*.dylib
-lib/*.dll
-lib/*.a
 result
 result/
 cmake-build-*
