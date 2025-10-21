@@ -37,6 +37,8 @@
             logosSdk
             logosLiblogos
           ];
+
+          libwakuLib = if pkgs.stdenv.hostPlatform.isDarwin then "libwaku.dylib" else "libwaku.so";
           
           cmakeFlags = [ 
             "-GNinja"
@@ -52,14 +54,12 @@
           # Copy libwaku library (dylib or so) to the result directory
           postInstall = ''
             mkdir -p $out/lib/logos/modules
-            # Copy whichever library file is available (.dylib for macOS, .so for Linux)
-            if [ -f $src/lib/libwaku.dylib ]; then
-              cp $src/lib/libwaku.dylib $out/lib/logos/modules/
-            elif [ -f $src/lib/libwaku.so ]; then
-              cp $src/lib/libwaku.so $out/lib/logos/modules/
-            else
-              echo "Warning: No libwaku library found in $src/lib/"
+            srcLib="$src/lib/${libwakuLib}"
+            if [ ! -f "$srcLib" ]; then
+              echo "Expected ${libwakuLib} in $src/lib/" >&2
+              exit 1
             fi
+            cp "$srcLib" "$out/lib/logos/modules/"
           '';
           
           meta = with pkgs.lib; {
