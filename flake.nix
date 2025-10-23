@@ -18,70 +18,23 @@
       });
     in
     {
-      packages = forAllSystems ({ pkgs, logosSdk, logosLiblogos }: {
-        default = pkgs.stdenv.mkDerivation rec {
-          pname = "logos-waku-module";
-          version = "1.0.0";
-          
+      packages = forAllSystems ({ pkgs, logosSdk, logosLiblogos }: 
+        let
+          # Common configuration
+          common = import ./nix/default.nix { inherit pkgs logosSdk logosLiblogos; };
           src = ./.;
           
-          nativeBuildInputs = [ 
-            pkgs.cmake 
-            pkgs.ninja 
-            pkgs.pkg-config
-            pkgs.qt6.wrapQtAppsNoGuiHook
-          ];
+          # Library package
+          lib = import ./nix/lib.nix { inherit pkgs common src; };
+        in
+        {
+          # Individual output
+          logos-waku-module-lib = lib;
           
-          buildInputs = [ 
-            pkgs.qt6.qtbase 
-            pkgs.qt6.qtremoteobjects 
-            logosSdk
-            logosLiblogos
-          ];
-
-          libwakuLib = if pkgs.stdenv.hostPlatform.isDarwin then "libwaku.dylib" else "libwaku.so";
-          
-          cmakeFlags = [ 
-            "-GNinja"
-            "-DLOGOS_CPP_SDK_ROOT=${logosSdk}"
-            "-DLOGOS_LIBLOGOS_ROOT=${logosLiblogos}"
-            "-DLOGOS_WAKU_MODULE_USE_VENDOR=OFF"
-          ];
-          
-          # Set environment variables for CMake to find the dependencies
-          LOGOS_CPP_SDK_ROOT = "${logosSdk}";
-          LOGOS_LIBLOGOS_ROOT = "${logosLiblogos}";
-          
-          # Copy libwaku library (dylib or so) and plugin to the result directory
-          postInstall = ''
-            mkdir -p $out/lib
-            
-            # Copy libwaku library
-            srcLib="$src/lib/${libwakuLib}"
-            if [ ! -f "$srcLib" ]; then
-              echo "Expected ${libwakuLib} in $src/lib/" >&2
-              exit 1
-            fi
-            cp "$srcLib" "$out/lib/"
-            
-            # Copy the waku module plugin (already installed by cmake to lib/logos/modules)
-            if [ -f "$out/lib/logos/modules/waku_module_plugin.dylib" ]; then
-              cp "$out/lib/logos/modules/waku_module_plugin.dylib" "$out/lib/"
-            elif [ -f "$out/lib/logos/modules/waku_module_plugin.so" ]; then
-              cp "$out/lib/logos/modules/waku_module_plugin.so" "$out/lib/"
-            fi
-            
-            # Remove the nested structure we don't want
-            rm -rf "$out/lib/logos" 2>/dev/null || true
-            rm -rf "$out/share" 2>/dev/null || true
-          '';
-          
-          meta = with pkgs.lib; {
-            description = "Logos Waku Module - Provides Waku network communication capabilities";
-            platforms = platforms.unix;
-          };
-        };
-      });
+          # Default package
+          default = lib;
+        }
+      );
 
       devShells = forAllSystems ({ pkgs, logosSdk, logosLiblogos }: {
         default = pkgs.mkShell {
@@ -93,8 +46,6 @@
           buildInputs = [
             pkgs.qt6.qtbase
             pkgs.qt6.qtremoteobjects
-            logosSdk
-            logosLiblogos
           ];
           
           shellHook = ''
@@ -108,4 +59,3 @@
       });
     };
 }
-
