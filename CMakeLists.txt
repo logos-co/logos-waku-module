@@ -52,7 +52,7 @@ set(_cpp_sdk_found FALSE)
 if(EXISTS "${LOGOS_CPP_SDK_ROOT}/cpp/logos_api.h")
     set(_cpp_sdk_found TRUE)
     set(_cpp_sdk_is_source TRUE)
-elseif(EXISTS "${LOGOS_CPP_SDK_ROOT}/include/logos_api.h")
+elseif(EXISTS "${LOGOS_CPP_SDK_ROOT}/include/cpp/logos_api.h")
     set(_cpp_sdk_found TRUE)
     set(_cpp_sdk_is_source FALSE)
 endif()
@@ -125,7 +125,14 @@ else()
 endif()
 
 set(LIBWAKU_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib")
-set(LIBWAKU_NAMES libwaku.so libwaku.dylib libwaku.dll waku.dll)
+# Prioritize platform-specific library names
+if(APPLE)
+    set(LIBWAKU_NAMES libwaku.dylib libwaku.so libwaku.dll waku.dll)
+elseif(WIN32)
+    set(LIBWAKU_NAMES libwaku.dll waku.dll libwaku.dylib libwaku.so)
+else()
+    set(LIBWAKU_NAMES libwaku.so libwaku.dylib libwaku.dll waku.dll)
+endif()
 # Always add lib directory and try to link -lwaku; also keep optional direct path if present
 find_library(LIBWAKU_PATH NAMES ${LIBWAKU_NAMES} PATHS ${LIBWAKU_DIR} NO_DEFAULT_PATH)
 
@@ -210,7 +217,11 @@ if(_cpp_sdk_is_source)
         ${LOGOS_CPP_SDK_ROOT}/cpp/generated
     )
 else()
-    target_include_directories(waku_module_plugin PRIVATE ${LOGOS_CPP_SDK_ROOT}/include)
+    target_include_directories(waku_module_plugin PRIVATE 
+        ${LOGOS_CPP_SDK_ROOT}/include
+        ${LOGOS_CPP_SDK_ROOT}/include/cpp
+        ${LOGOS_CPP_SDK_ROOT}/include/core
+    )
 endif()
 
 set_target_properties(waku_module_plugin PROPERTIES

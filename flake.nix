@@ -2,7 +2,8 @@
   description = "Logos Waku Module";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # Follow the same nixpkgs as logos-liblogos to ensure compatibility
+    nixpkgs.follows = "logos-liblogos/nixpkgs";
     logos-cpp-sdk.url = "github:logos-co/logos-cpp-sdk";
     logos-liblogos.url = "github:logos-co/logos-liblogos";
   };
@@ -51,15 +52,28 @@
           LOGOS_CPP_SDK_ROOT = "${logosSdk}";
           LOGOS_LIBLOGOS_ROOT = "${logosLiblogos}";
           
-          # Copy libwaku library (dylib or so) to the result directory
+          # Copy libwaku library (dylib or so) and plugin to the result directory
           postInstall = ''
-            mkdir -p $out/lib/logos/modules
+            mkdir -p $out/lib
+            
+            # Copy libwaku library
             srcLib="$src/lib/${libwakuLib}"
             if [ ! -f "$srcLib" ]; then
               echo "Expected ${libwakuLib} in $src/lib/" >&2
               exit 1
             fi
-            cp "$srcLib" "$out/lib/logos/modules/"
+            cp "$srcLib" "$out/lib/"
+            
+            # Copy the waku module plugin (already installed by cmake to lib/logos/modules)
+            if [ -f "$out/lib/logos/modules/waku_module_plugin.dylib" ]; then
+              cp "$out/lib/logos/modules/waku_module_plugin.dylib" "$out/lib/"
+            elif [ -f "$out/lib/logos/modules/waku_module_plugin.so" ]; then
+              cp "$out/lib/logos/modules/waku_module_plugin.so" "$out/lib/"
+            fi
+            
+            # Remove the nested structure we don't want
+            rm -rf "$out/lib/logos" 2>/dev/null || true
+            rm -rf "$out/share" 2>/dev/null || true
           '';
           
           meta = with pkgs.lib; {
