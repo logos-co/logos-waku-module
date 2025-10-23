@@ -24,15 +24,25 @@
           common = import ./nix/default.nix { inherit pkgs logosSdk logosLiblogos; };
           src = ./.;
           
-          # Library package
+          # Library package (plugin + libwaku)
           lib = import ./nix/lib.nix { inherit pkgs common src; };
+          
+          # Include package (generated headers from plugin)
+          include = import ./nix/include.nix { inherit pkgs common src lib logosSdk; };
+          
+          # Combined package
+          combined = pkgs.symlinkJoin {
+            name = "logos-waku-module";
+            paths = [ lib include ];
+          };
         in
         {
-          # Individual output
+          # Individual outputs
           logos-waku-module-lib = lib;
+          logos-waku-module-include = include;
           
-          # Default package
-          default = lib;
+          # Default package (combined)
+          default = combined;
         }
       );
 

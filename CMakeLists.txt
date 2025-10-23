@@ -190,12 +190,15 @@ if(NOT _cpp_sdk_is_source)
     target_link_libraries(waku_module_plugin PRIVATE ${LOGOS_SDK_LIB})
 endif()
 
-# Link libwaku if found
-if(LIBWAKU_PATH)
-    # Link directly to the found libwaku path
-    target_link_libraries(waku_module_plugin PRIVATE ${LIBWAKU_PATH})
-else()
-    message(WARNING "libwaku not found in lib/. Build or provide it before linking.")
+# On macOS with -undefined dynamic_lookup, we don't need to link libwaku at build time
+# On Linux, we do need to link it
+if(NOT APPLE)
+    if(LIBWAKU_PATH)
+        # Link directly to the found libwaku path on Linux
+        target_link_libraries(waku_module_plugin PRIVATE ${LIBWAKU_PATH})
+    else()
+        message(WARNING "libwaku not found in lib/. Build or provide it before linking.")
+    endif()
 endif()
 
 # Include directories
@@ -249,7 +252,6 @@ if(APPLE)
 
         add_custom_command(TARGET waku_module_plugin POST_BUILD
             COMMAND install_name_tool -id "@rpath/waku_module_plugin.dylib" $<TARGET_FILE:waku_module_plugin>
-            COMMAND install_name_tool -change "${LIBWAKU_PATH}" "@rpath/${LIBWAKU_FILENAME}" $<TARGET_FILE:waku_module_plugin>
             COMMAND install_name_tool -id "@rpath/${LIBWAKU_FILENAME}" "${CMAKE_BINARY_DIR}/modules/${LIBWAKU_FILENAME}"
             COMMENT "Updating library paths for macOS"
         )
