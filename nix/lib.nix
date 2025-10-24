@@ -22,9 +22,22 @@ pkgs.stdenv.mkDerivation {
     fi
     cp "$srcLib" "$out/lib/"
     
+    # Fix the install name of libwaku on macOS
+    ${pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
+      ${pkgs.darwin.cctools}/bin/install_name_tool -id "@rpath/''${libwakuLib}" "$out/lib/''${libwakuLib}"
+    ''}
+    
     # Copy the waku module plugin from the installed location
     if [ -f "$out/lib/logos/modules/waku_module_plugin.dylib" ]; then
       cp "$out/lib/logos/modules/waku_module_plugin.dylib" "$out/lib/"
+      
+      # Fix the plugin's reference to libwaku on macOS
+      ${pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
+        # Find what libwaku path the plugin is referencing and change it to @rpath
+        for dep in $(${pkgs.darwin.cctools}/bin/otool -L "$out/lib/waku_module_plugin.dylib" | grep libwaku | awk '{print $1}'); do
+          ${pkgs.darwin.cctools}/bin/install_name_tool -change "$dep" "@rpath/''${libwakuLib}" "$out/lib/waku_module_plugin.dylib"
+        done
+      ''}
     elif [ -f "$out/lib/logos/modules/waku_module_plugin.so" ]; then
       cp "$out/lib/logos/modules/waku_module_plugin.so" "$out/lib/"
     else
