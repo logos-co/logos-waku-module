@@ -24,7 +24,7 @@ The result will include:
 
 ```bash
 # Build only the library (plugin + libwaku)
-nix build '.#logos-waku-module-lib'
+nix build '.#lib'
 
 # Build only the generated headers
 nix build '.#logos-waku-module-include'

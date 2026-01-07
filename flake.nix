@@ -40,6 +40,7 @@
           # Individual outputs
           logos-waku-module-lib = lib;
           logos-waku-module-include = include;
+          lib = lib;
           
           # Default package (combined)
           default = combined;
