@@ -21,7 +21,7 @@ public:
     Q_INVOKABLE bool startWaku() override;
     Q_INVOKABLE bool stopWaku() override;
     Q_INVOKABLE bool setEventCallback() override;
-    Q_INVOKABLE bool relaySubscribe(const QString &pubSubTopic) override;
+    Q_INVOKABLE bool relaySubscribe(const QString &contentTopic, const QString &pubSubTopic = QString()) override;
     Q_INVOKABLE bool relayPublish(const QString &pubSubTopic, const QString &jsonWakuMessage) override;
     Q_INVOKABLE bool filterSubscribe(const QString &pubSubTopic, const QString &contentTopics) override;
     Q_INVOKABLE bool storeQuery(const QString &jsonQuery, const QString &peerAddr) override;

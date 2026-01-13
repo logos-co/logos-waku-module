@@ -316,9 +316,9 @@ bool WakuModulePlugin::setEventCallback()
     return true;
 }
 
-bool WakuModulePlugin::relaySubscribe(const QString &pubSubTopic)
+bool WakuModulePlugin::relaySubscribe(const QString &contentTopic, const QString &pubSubTopic)
 {
-    qDebug() << "WakuModulePlugin::relaySubscribe called with pubSubTopic:" << pubSubTopic;
+    qDebug() << "WakuModulePlugin::relaySubscribe called with contentTopic:" << contentTopic << ", pubSubTopic:" << pubSubTopic;
 
     if (!wakuCtx)
     {
@@ -326,20 +326,24 @@ bool WakuModulePlugin::relaySubscribe(const QString &pubSubTopic)
         return false;
     }
 
-    // Convert QString to UTF-8 byte array
-    QByteArray topicUtf8 = pubSubTopic.toUtf8();
+    // Convert QStrings to UTF-8 byte arrays
+    QByteArray contentTopicUtf8 = contentTopic.toUtf8();
+    QByteArray pubSubTopicUtf8 = pubSubTopic.toUtf8();
 
-    // Call waku_relay_subscribe with the pubsub topic
-    int result = waku_relay_subscribe(wakuCtx, relay_subscribe_callback, this, topicUtf8.constData());
+    // Call waku_relay_subscribe with both pubSubTopic and contentTopic
+    // Pass empty string "" if not provided instead of nullptr
+    int result = waku_relay_subscribe(wakuCtx, relay_subscribe_callback, this,
+                                      pubSubTopicUtf8.isEmpty() ? "" : pubSubTopicUtf8.constData(),
+                                      contentTopicUtf8.isEmpty() ? "" : contentTopicUtf8.constData());
 
     if (result == RET_OK)
     {
-        qDebug() << "WakuModulePlugin: Relay subscribe initiated successfully for topic:" << pubSubTopic;
+        qDebug() << "WakuModulePlugin: Relay subscribe initiated successfully";
         return true;
     }
     else
     {
-        qWarning() << "WakuModulePlugin: Failed to subscribe to relay topic:" << pubSubTopic << ", error code:" << result;
+        qWarning() << "WakuModulePlugin: Failed to subscribe to relay, error code:" << result;
         return false;
     }
 }
