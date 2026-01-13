@@ -11,7 +11,7 @@ public:
     Q_INVOKABLE virtual bool initWaku(const QString &cfg) = 0;
     Q_INVOKABLE virtual bool startWaku() = 0;
     Q_INVOKABLE virtual bool setEventCallback() = 0;
-    Q_INVOKABLE virtual bool relaySubscribe(const QString &pubSubTopic) = 0;
+    Q_INVOKABLE virtual bool relaySubscribe(const QString &contentTopic, const QString &pubSubTopic = QString()) = 0;
     Q_INVOKABLE virtual bool relayPublish(const QString &pubSubTopic, const QString &jsonWakuMessage) = 0;
     Q_INVOKABLE virtual bool filterSubscribe(const QString &pubSubTopic, const QString &contentTopics) = 0;
     Q_INVOKABLE virtual bool storeQuery(const QString &jsonQuery, const QString &peerAddr) = 0;
