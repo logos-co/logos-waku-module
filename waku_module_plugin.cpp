@@ -10,16 +10,18 @@ WakuModulePlugin::WakuModulePlugin() : wakuCtx(nullptr)
     qDebug() << "WakuModulePlugin: Initialized successfully";
 }
 
-WakuModulePlugin::~WakuModulePlugin() 
+WakuModulePlugin::~WakuModulePlugin()
 {
     // Clean up resources
-    if (logosAPI) {
+    if (logosAPI)
+    {
         delete logosAPI;
         logosAPI = nullptr;
     }
-    
+
     // Clean up Waku context if it exists
-    if (wakuCtx) {
+    if (wakuCtx)
+    {
         // TODO: Call waku_destroy when needed
         wakuCtx = nullptr;
     }
@@ -31,51 +33,58 @@ bool WakuModulePlugin::foo(const QString &bar)
 
     // Create event data with the bar parameter
     QVariantList eventData;
-    eventData << bar; // Add the bar parameter to the event data
+    eventData << bar;                                                // Add the bar parameter to the event data
     eventData << QDateTime::currentDateTime().toString(Qt::ISODate); // Add timestamp
 
     // Trigger the event using LogosAPI client (like chat module does)
-    if (logosAPI) {
+    if (logosAPI)
+    {
         // print triggering signal
         qDebug() << "WakuModulePlugin: Triggering event 'fooTriggered' with data:" << eventData;
         logosAPI->getClient("core_manager")->onEventResponse(this, "fooTriggered", eventData);
         qDebug() << "WakuModulePlugin: Event 'fooTriggered' triggered with data:" << eventData;
-    } else {
+    }
+    else
+    {
         qWarning() << "WakuModulePlugin: LogosAPI not available, cannot trigger event";
     }
 
     return true;
 }
 
-void WakuModulePlugin::init_callback(int callerRet, const char* msg, size_t len, void* userData)
+void WakuModulePlugin::init_callback(int callerRet, const char *msg, size_t len, void *userData)
 {
     qDebug() << "WakuModulePlugin::init_callback called with ret:" << callerRet;
-    if (msg && len > 0) {
+    if (msg && len > 0)
+    {
         QString message = QString::fromUtf8(msg, len);
         qDebug() << "WakuModulePlugin::init_callback message:" << message;
     }
 }
 
-void WakuModulePlugin::start_callback(int callerRet, const char* msg, size_t len, void* userData)
+void WakuModulePlugin::start_callback(int callerRet, const char *msg, size_t len, void *userData)
 {
     qDebug() << "WakuModulePlugin::start_callback called with ret:" << callerRet;
-    if (msg && len > 0) {
+    if (msg && len > 0)
+    {
         QString message = QString::fromUtf8(msg, len);
         qDebug() << "WakuModulePlugin::start_callback message:" << message;
     }
 }
 
-void WakuModulePlugin::event_callback(int callerRet, const char* msg, size_t len, void* userData)
+void WakuModulePlugin::event_callback(int callerRet, const char *msg, size_t len, void *userData)
 {
     qDebug() << "WakuModulePlugin::event_callback called with ret:" << callerRet;
 
-    WakuModulePlugin* plugin = static_cast<WakuModulePlugin*>(userData);
-    if (!plugin) {
+    WakuModulePlugin *plugin = static_cast<WakuModulePlugin *>(userData);
+    if (!plugin)
+    {
         qWarning() << "WakuModulePlugin::event_callback: Invalid userData";
         return;
     }
 
-    if (msg && len > 0) {
+    if (msg && len > 0)
+    {
         QString message = QString::fromUtf8(msg, len);
         // qDebug() << "WakuModulePlugin::event_callback message:" << message;
 
@@ -85,54 +94,72 @@ void WakuModulePlugin::event_callback(int callerRet, const char* msg, size_t len
         eventData << QDateTime::currentDateTime().toString(Qt::ISODate);
 
         // Trigger event using LogosAPI client
-        if (plugin->logosAPI) {
+        if (plugin->logosAPI)
+        {
             // qDebug() << "------------------------> WakuModulePlugin: Triggering event 'wakuMessage' with data:" << eventData;
             plugin->logosAPI->getClient("core_manager")->onEventResponse(plugin, "wakuMessage", eventData);
-        } else {
+        }
+        else
+        {
             qWarning() << "WakuModulePlugin: LogosAPI not available, cannot trigger event";
         }
     }
 }
 
-void WakuModulePlugin::relay_subscribe_callback(int callerRet, const char* msg, size_t len, void* userData)
+void WakuModulePlugin::relay_subscribe_callback(int callerRet, const char *msg, size_t len, void *userData)
 {
     qDebug() << "WakuModulePlugin::relay_subscribe_callback called with ret:" << callerRet;
-    if (msg && len > 0) {
+    if (msg && len > 0)
+    {
         QString message = QString::fromUtf8(msg, len);
         qDebug() << "WakuModulePlugin::relay_subscribe_callback message:" << message;
     }
 }
 
-void WakuModulePlugin::relay_publish_callback(int callerRet, const char* msg, size_t len, void* userData)
+void WakuModulePlugin::relay_publish_callback(int callerRet, const char *msg, size_t len, void *userData)
 {
     qDebug() << "WakuModulePlugin::relay_publish_callback called with ret:" << callerRet;
-    if (msg && len > 0) {
+    if (msg && len > 0)
+    {
         QString message = QString::fromUtf8(msg, len);
         qDebug() << "WakuModulePlugin::relay_publish_callback message:" << message;
     }
 }
 
-void WakuModulePlugin::filter_subscribe_callback(int callerRet, const char* msg, size_t len, void* userData)
+void WakuModulePlugin::light_publish_callback(int callerRet, const char *msg, size_t len, void *userData)
+{
+    qDebug() << "WakuModulePlugin::light_publish_callback called with ret:" << callerRet;
+    if (msg && len > 0)
+    {
+        QString message = QString::fromUtf8(msg, len);
+        qDebug() << "WakuModulePlugin::light_publish_callback message:" << message;
+    }
+}
+
+void WakuModulePlugin::filter_subscribe_callback(int callerRet, const char *msg, size_t len, void *userData)
 {
     qDebug() << "WakuModulePlugin::filter_subscribe_callback called with ret:" << callerRet;
-    if (msg && len > 0) {
+    if (msg && len > 0)
+    {
         QString message = QString::fromUtf8(msg, len);
         qDebug() << "WakuModulePlugin::filter_subscribe_callback message:" << message;
     }
 }
 
-void WakuModulePlugin::store_query_callback(int callerRet, const char* msg, size_t len, void* userData)
+void WakuModulePlugin::store_query_callback(int callerRet, const char *msg, size_t len, void *userData)
 {
     qDebug() << "WakuModulePlugin::store_query_callback called with ret:" << callerRet;
 
-    WakuModulePlugin* plugin = static_cast<WakuModulePlugin*>(userData);
-    if (!plugin) {
+    WakuModulePlugin *plugin = static_cast<WakuModulePlugin *>(userData);
+    if (!plugin)
+    {
         qWarning() << "WakuModulePlugin::store_query_callback: Invalid userData";
         exit(1);
         return;
     }
 
-    if (msg && len > 0) {
+    if (msg && len > 0)
+    {
         QString message = QString::fromUtf8(msg, len);
         // qDebug() << "WakuModulePlugin::store_query_callback message:" << message;
 
@@ -142,19 +169,24 @@ void WakuModulePlugin::store_query_callback(int callerRet, const char* msg, size
         eventData << QDateTime::currentDateTime().toString(Qt::ISODate);
 
         // Trigger event using LogosAPI client (similar to event_callback)
-        if (plugin->logosAPI) {
+        if (plugin->logosAPI)
+        {
             // qDebug() << "WakuModulePlugin: Triggering event 'storeQueryResult' with data:" << eventData;
             plugin->logosAPI->getClient("core_manager")->onEventResponse(plugin, "storeQueryResponse", eventData);
             // exit(1);
-        } else {
+        }
+        else
+        {
             qWarning() << "WakuModulePlugin: LogosAPI not available, cannot trigger event";
             exit(1);
         }
     }
 }
 
-void WakuModulePlugin::initLogos(LogosAPI* logosAPIInstance) {
-    if (logosAPI) {
+void WakuModulePlugin::initLogos(LogosAPI *logosAPIInstance)
+{
+    if (logosAPI)
+    {
         delete logosAPI;
     }
     logosAPI = logosAPIInstance;
@@ -162,18 +194,21 @@ void WakuModulePlugin::initLogos(LogosAPI* logosAPIInstance) {
 
 bool WakuModulePlugin::initWaku(const QString &cfg)
 {
-    qDebug() << "WakuModulePlugin::initWaku called with cfg:" << cfg;
-    
+    qDebug() << "WakuModulePlugin-Updated::initWaku called with cfg:" << cfg;
+
     // Convert QString to UTF-8 byte array
     QByteArray cfgUtf8 = cfg.toUtf8();
-    
+
     // Call waku_new with the configuration
     wakuCtx = waku_new(cfgUtf8.constData(), init_callback, this);
-    
-    if (wakuCtx) {
+
+    if (wakuCtx)
+    {
         qDebug() << "WakuModulePlugin: Waku context created successfully";
         return true;
-    } else {
+    }
+    else
+    {
         qWarning() << "WakuModulePlugin: Failed to create Waku context";
         return false;
     }
@@ -182,19 +217,23 @@ bool WakuModulePlugin::initWaku(const QString &cfg)
 bool WakuModulePlugin::startWaku()
 {
     qDebug() << "WakuModulePlugin::startWaku called";
-    
-    if (!wakuCtx) {
+
+    if (!wakuCtx)
+    {
         qWarning() << "WakuModulePlugin: Cannot start Waku - context not initialized. Call initWaku first.";
         return false;
     }
-    
+
     // Call waku_start with the saved context
     int result = waku_start(wakuCtx, start_callback, this);
-    
-    if (result == RET_OK) {
+
+    if (result == RET_OK)
+    {
         qDebug() << "==================WakuModulePlugin: Waku start initiated successfully=======================";
         return true;
-    } else {
+    }
+    else
+    {
         qWarning() << "WakuModulePlugin: Failed to start Waku, error code:" << result;
         return false;
     }
@@ -203,39 +242,48 @@ bool WakuModulePlugin::startWaku()
 bool WakuModulePlugin::setEventCallback()
 {
     qDebug() << "WakuModulePlugin::setEventCallback called";
-    
-    if (!wakuCtx) {
+
+    if (!wakuCtx)
+    {
         qWarning() << "WakuModulePlugin: Cannot set event callback - context not initialized. Call initWaku first.";
         return false;
     }
-    
+
     // Set the event callback using waku_set_event_callback
-    waku_set_event_callback(wakuCtx, event_callback, this);
-    
+    set_event_callback(wakuCtx, event_callback, this);
+
     qDebug() << "WakuModulePlugin: Event callback set successfully";
     return true;
 }
 
-bool WakuModulePlugin::relaySubscribe(const QString &pubSubTopic)
+bool WakuModulePlugin::relaySubscribe(const QString &contentTopic, const QString &pubSubTopic)
 {
-    qDebug() << "WakuModulePlugin::relaySubscribe called with pubSubTopic:" << pubSubTopic;
-    
-    if (!wakuCtx) {
+    qDebug() << "WakuModulePlugin::relaySubscribe called with contentTopic:" << contentTopic << ", pubSubTopic:" << pubSubTopic;
+
+    if (!wakuCtx)
+    {
         qWarning() << "WakuModulePlugin: Cannot subscribe to relay - context not initialized. Call initWaku first.";
         return false;
     }
-    
-    // Convert QString to UTF-8 byte array
-    QByteArray topicUtf8 = pubSubTopic.toUtf8();
-    
-    // Call waku_relay_subscribe with the pubsub topic
-    int result = waku_relay_subscribe(wakuCtx, topicUtf8.constData(), relay_subscribe_callback, this);
-    
-    if (result == RET_OK) {
-        qDebug() << "WakuModulePlugin: Relay subscribe initiated successfully for topic:" << pubSubTopic;
+
+    // Convert QStrings to UTF-8 byte arrays
+    QByteArray contentTopicUtf8 = contentTopic.toUtf8();
+    QByteArray pubSubTopicUtf8 = pubSubTopic.toUtf8();
+
+    // Call waku_relay_subscribe with both pubSubTopic and contentTopic
+    // Pass empty string "" if not provided instead of nullptr
+    int result = waku_relay_subscribe(wakuCtx, relay_subscribe_callback, this,
+                                      pubSubTopicUtf8.isEmpty() ? "" : pubSubTopicUtf8.constData(),
+                                      contentTopicUtf8.isEmpty() ? "" : contentTopicUtf8.constData());
+
+    if (result == RET_OK)
+    {
+        qDebug() << "WakuModulePlugin: Relay subscribe initiated successfully";
         return true;
-    } else {
-        qWarning() << "WakuModulePlugin: Failed to subscribe to relay topic:" << pubSubTopic << ", error code:" << result;
+    }
+    else
+    {
+        qWarning() << "WakuModulePlugin: Failed to subscribe to relay, error code:" << result;
         return false;
     }
 }
@@ -244,24 +292,58 @@ bool WakuModulePlugin::relayPublish(const QString &pubSubTopic, const QString &j
 {
     qDebug() << "WakuModulePlugin::relayPublish called with pubSubTopic:" << pubSubTopic;
     qDebug() << "WakuModulePlugin::relayPublish message:" << jsonWakuMessage;
-    
-    if (!wakuCtx) {
+
+    if (!wakuCtx)
+    {
         qWarning() << "WakuModulePlugin: Cannot publish to relay - context not initialized. Call initWaku first.";
         return false;
     }
-    
+
     // Convert QStrings to UTF-8 byte arrays
     QByteArray topicUtf8 = pubSubTopic.toUtf8();
     QByteArray messageUtf8 = jsonWakuMessage.toUtf8();
-    
+
     // Call waku_relay_publish with hardcoded timeout of 10000ms
-    int result = waku_relay_publish(wakuCtx, topicUtf8.constData(), messageUtf8.constData(), 10000, relay_publish_callback, this);
-    
-    if (result == RET_OK) {
+    int result = waku_relay_publish(wakuCtx, relay_publish_callback, this, topicUtf8.constData(), messageUtf8.constData(), 10000);
+
+    if (result == RET_OK)
+    {
         qDebug() << "WakuModulePlugin: Relay publish initiated successfully for topic:" << pubSubTopic;
         return true;
-    } else {
+    }
+    else
+    {
         qWarning() << "WakuModulePlugin: Failed to publish to relay topic:" << pubSubTopic << ", error code:" << result;
+        return false;
+    }
+}
+
+bool WakuModulePlugin::lightPublish(const QString &pubSubTopic, const QString &jsonWakuMessage)
+{
+    qDebug() << "WakuModulePlugin::lightPublish called with pubSubTopic:" << pubSubTopic;
+    qDebug() << "WakuModulePlugin::lightPublish message:" << jsonWakuMessage;
+
+    if (!wakuCtx)
+    {
+        qWarning() << "WakuModulePlugin: Cannot publish using lightpush - context not initialized. Call initWaku first.";
+        return false;
+    }
+
+    // Convert QStrings to UTF-8 byte arrays
+    QByteArray topicUtf8 = pubSubTopic.toUtf8();
+    QByteArray messageUtf8 = jsonWakuMessage.toUtf8();
+
+    // why there is no timeout for lightpush publish???
+    int result = waku_lightpush_publish(wakuCtx, light_publish_callback, this, topicUtf8.constData(), messageUtf8.constData());
+
+    if (result == RET_OK)
+    {
+        qDebug() << "WakuModulePlugin: Lightpush publish initiated successfully for topic:" << pubSubTopic;
+        return true;
+    }
+    else
+    {
+        qWarning() << "WakuModulePlugin: Failed to publish to lightpush topic:" << pubSubTopic << ", error code:" << result;
         return false;
     }
 }
@@ -270,23 +352,27 @@ bool WakuModulePlugin::filterSubscribe(const QString &pubSubTopic, const QString
 {
     qDebug() << "WakuModulePlugin::filterSubscribe called with pubSubTopic:" << pubSubTopic;
     qDebug() << "WakuModulePlugin::filterSubscribe contentTopics:" << contentTopics;
-    
-    if (!wakuCtx) {
+
+    if (!wakuCtx)
+    {
         qWarning() << "WakuModulePlugin: Cannot subscribe to filter - context not initialized. Call initWaku first.";
         return false;
     }
-    
+
     // Convert QStrings to UTF-8 byte arrays
     QByteArray topicUtf8 = pubSubTopic.toUtf8();
     QByteArray contentTopicsUtf8 = contentTopics.toUtf8();
-    
+
     // Call waku_filter_subscribe
-    int result = waku_filter_subscribe(wakuCtx, topicUtf8.constData(), contentTopicsUtf8.constData(), filter_subscribe_callback, this);
-    
-    if (result == RET_OK) {
+    int result = waku_filter_subscribe(wakuCtx, filter_subscribe_callback, this, topicUtf8.constData(), contentTopicsUtf8.constData());
+
+    if (result == RET_OK)
+    {
         qDebug() << "WakuModulePlugin: Filter subscribe initiated successfully for topic:" << pubSubTopic;
         return true;
-    } else {
+    }
+    else
+    {
         qWarning() << "WakuModulePlugin: Failed to subscribe to filter topic:" << pubSubTopic << ", error code:" << result;
         return false;
     }
@@ -296,25 +382,28 @@ bool WakuModulePlugin::storeQuery(const QString &jsonQuery, const QString &peerA
 {
     qDebug() << "WakuModulePlugin::storeQuery called with jsonQuery:" << jsonQuery;
     qDebug() << "WakuModulePlugin::storeQuery peerAddr:" << peerAddr;
-    
-    if (!wakuCtx) {
+
+    if (!wakuCtx)
+    {
         qWarning() << "WakuModulePlugin: Cannot execute store query - context not initialized. Call initWaku first.";
         return false;
     }
-    
+
     // Convert QStrings to UTF-8 byte arrays
     QByteArray queryUtf8 = jsonQuery.toUtf8();
     QByteArray peerAddrUtf8 = peerAddr.toUtf8();
-    
+
     // Call waku_store_query with hardcoded timeout of 30000ms
-    int result = waku_store_query(wakuCtx, queryUtf8.constData(), peerAddrUtf8.constData(), 30000, store_query_callback, this);
-    
-    if (result == RET_OK) {
+    int result = waku_store_query(wakuCtx, store_query_callback, this, queryUtf8.constData(), peerAddrUtf8.constData(), 30000);
+
+    if (result == RET_OK)
+    {
         qDebug() << "WakuModulePlugin: Store query initiated successfully for peer:" << peerAddr;
         return true;
-    } else {
+    }
+    else
+    {
         qWarning() << "WakuModulePlugin: Failed to execute store query for peer:" << peerAddr << ", error code:" << result;
         return false;
     }
-} 
-
+}
