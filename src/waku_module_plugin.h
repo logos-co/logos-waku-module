@@ -4,7 +4,7 @@
 #include "waku_module_interface.h"
 #include "logos_api.h"
 #include "logos_api_client.h"
-#include "libwaku.h"
+#include "lib/libwaku.h"
 
 class WakuModulePlugin : public QObject, public WakuModuleInterface
 {

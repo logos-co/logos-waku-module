@@ -1,0 +1,30 @@
+# Logos Waku Module Configuration
+# Migrated to use logos-module-builder
+
+name: waku_module
+version: 1.0.0
+type: core
+category: protocol
+description: "Waku network protocol module for Logos"
+
+# No module dependencies (waku is a base module)
+dependencies: []
+
+# Nix packages needed
+nix_packages:
+  build: []
+  runtime: []
+
+# External library: libwaku
+# The library is pre-built and stored in lib/
+external_libraries:
+  - name: waku
+    vendor_path: "lib"
+
+# CMake configuration
+cmake:
+  find_packages: []
+  extra_sources: []
+  extra_include_dirs:
+    - lib
+  extra_link_libraries: []
