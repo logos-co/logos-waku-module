@@ -1,0 +1,30 @@
+name: waku_module
+version: 1.0.0
+type: core
+category: protocol
+description: "Logos Waku Module - Provides Waku network communication capabilities"
+
+# No module dependencies
+dependencies: []
+
+# Qt packages needed for build
+nix_packages:
+  build:
+    - qt6.qtbase
+    - qt6.qtremoteobjects
+    - qt6.wrapQtAppsNoGuiHook
+  runtime: []
+
+# External library (libwaku)
+external_libraries:
+  - name: libwaku
+    vendor_path: "lib"
+
+# Library files to bundle with the module
+include:
+  - libwaku.so
+  - libwaku.dylib
+  - libwaku.dll
+
+# No CMake-specific configuration needed (using defaults)
+cmake: {}
