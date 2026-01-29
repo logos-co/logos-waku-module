@@ -25,6 +25,21 @@ WakuModulePlugin::~WakuModulePlugin()
     }
 }
 
+void WakuModulePlugin::emitEvent(const QString& eventName, const QVariantList& data) {
+    if (!logosAPI) {
+        qWarning() << "WakuModulePlugin: LogosAPI not available, cannot emit" << eventName;
+        return;
+    }
+
+    LogosAPIClient* client = logosAPI->getClient("waku_module");
+    if (!client) {
+        qWarning() << "WakuModulePlugin: Failed to get waku_module client for event" << eventName;
+        return;
+    }
+
+    client->onEventResponse(this, eventName, data);
+}
+
 bool WakuModulePlugin::foo(const QString &bar)
 {
     qDebug() << "WakuModulePlugin::foo called with:" << bar;
@@ -34,15 +49,10 @@ bool WakuModulePlugin::foo(const QString &bar)
     eventData << bar; // Add the bar parameter to the event data
     eventData << QDateTime::currentDateTime().toString(Qt::ISODate); // Add timestamp
 
-    // Trigger the event using LogosAPI client (like chat module does)
-    if (logosAPI) {
-        // print triggering signal
-        qDebug() << "WakuModulePlugin: Triggering event 'fooTriggered' with data:" << eventData;
-        logosAPI->getClient("core_manager")->onEventResponse(this, "fooTriggered", eventData);
-        qDebug() << "WakuModulePlugin: Event 'fooTriggered' triggered with data:" << eventData;
-    } else {
-        qWarning() << "WakuModulePlugin: LogosAPI not available, cannot trigger event";
-    }
+    // Trigger the event using emitEvent helper
+    qDebug() << "WakuModulePlugin: Triggering event 'fooTriggered' with data:" << eventData;
+    emitEvent("fooTriggered", eventData);
+    qDebug() << "WakuModulePlugin: Event 'fooTriggered' triggered with data:" << eventData;
 
     return true;
 }
@@ -84,13 +94,9 @@ void WakuModulePlugin::event_callback(int callerRet, const char* msg, size_t len
         eventData << message;
         eventData << QDateTime::currentDateTime().toString(Qt::ISODate);
 
-        // Trigger event using LogosAPI client
-        if (plugin->logosAPI) {
-            // qDebug() << "------------------------> WakuModulePlugin: Triggering event 'wakuMessage' with data:" << eventData;
-            plugin->logosAPI->getClient("core_manager")->onEventResponse(plugin, "wakuMessage", eventData);
-        } else {
-            qWarning() << "WakuModulePlugin: LogosAPI not available, cannot trigger event";
-        }
+        // Trigger event using emitEvent helper
+        // qDebug() << "------------------------> WakuModulePlugin: Triggering event 'wakuMessage' with data:" << eventData;
+        plugin->emitEvent("wakuMessage", eventData);
     }
 }
 
@@ -141,15 +147,70 @@ void WakuModulePlugin::store_query_callback(int callerRet, const char* msg, size
         eventData << message;
         eventData << QDateTime::currentDateTime().toString(Qt::ISODate);
 
-        // Trigger event using LogosAPI client (similar to event_callback)
-        if (plugin->logosAPI) {
-            // qDebug() << "WakuModulePlugin: Triggering event 'storeQueryResult' with data:" << eventData;
-            plugin->logosAPI->getClient("core_manager")->onEventResponse(plugin, "storeQueryResponse", eventData);
-            // exit(1);
-        } else {
-            qWarning() << "WakuModulePlugin: LogosAPI not available, cannot trigger event";
-            exit(1);
-        }
+        // Trigger event using emitEvent helper
+        // qDebug() << "WakuModulePlugin: Triggering event 'storeQueryResponse' with data:" << eventData;
+        plugin->emitEvent("storeQueryResponse", eventData);
+    }
+}
+
+void WakuModulePlugin::stop_callback(int callerRet, const char* msg, size_t len, void* userData)
+{
+    qDebug() << "WakuModulePlugin::stop_callback called with ret:" << callerRet;
+    if (msg && len > 0) {
+        QString message = QString::fromUtf8(msg, len);
+        qDebug() << "WakuModulePlugin::stop_callback message:" << message;
+    }
+}
+
+void WakuModulePlugin::get_connected_peers_callback(int callerRet, const char* msg, size_t len, void* userData)
+{
+    qDebug() << "WakuModulePlugin::get_connected_peers_callback called with ret:" << callerRet;
+
+    WakuModulePlugin* plugin = static_cast<WakuModulePlugin*>(userData);
+    if (!plugin) {
+        qWarning() << "WakuModulePlugin::get_connected_peers_callback: Invalid userData";
+        return;
+    }
+
+    if (msg && len > 0) {
+        QString message = QString::fromUtf8(msg, len);
+        qDebug() << "WakuModulePlugin::get_connected_peers_callback message:" << message;
+        qDebug() << "WakuModulePlugin::get_connected_peers_callback message length:" << len;
+
+        // Create event data with the connected peers result
+        QVariantList eventData;
+        eventData << message;
+        eventData << QDateTime::currentDateTime().toString(Qt::ISODate);
+
+        // Trigger event using emitEvent helper
+        qDebug() << "WakuModulePlugin: Triggering event 'connectedPeersResponse' with data:" << eventData;
+        plugin->emitEvent("connectedPeersResponse", eventData);
+    }
+}
+
+void WakuModulePlugin::get_metrics_callback(int callerRet, const char* msg, size_t len, void* userData)
+{
+    qDebug() << "WakuModulePlugin::get_metrics_callback called with ret:" << callerRet;
+
+    WakuModulePlugin* plugin = static_cast<WakuModulePlugin*>(userData);
+    if (!plugin) {
+        qWarning() << "WakuModulePlugin::get_metrics_callback: Invalid userData";
+        return;
+    }
+
+    if (msg && len > 0) {
+        QString message = QString::fromUtf8(msg, len);
+        qDebug() << "WakuModulePlugin::get_metrics_callback message:" << message;
+        qDebug() << "WakuModulePlugin::get_metrics_callback message length:" << len;
+
+        // Create event data with the metrics result
+        QVariantList eventData;
+        eventData << message;
+        eventData << QDateTime::currentDateTime().toString(Qt::ISODate);
+
+        // Trigger event using emitEvent helper
+        qDebug() << "WakuModulePlugin: Triggering event 'metricsResponse' with data:" << eventData;
+        plugin->emitEvent("metricsResponse", eventData);
     }
 }
 
@@ -316,5 +377,67 @@ bool WakuModulePlugin::storeQuery(const QString &jsonQuery, const QString &peerA
         qWarning() << "WakuModulePlugin: Failed to execute store query for peer:" << peerAddr << ", error code:" << result;
         return false;
     }
-} 
+}
 
+bool WakuModulePlugin::stopWaku()
+{
+    qDebug() << "WakuModulePlugin::stopWaku called";
+    
+    if (!wakuCtx) {
+        qWarning() << "WakuModulePlugin: Cannot stop Waku - context not initialized. Call initWaku first.";
+        return false;
+    }
+    
+    // Call waku_stop with the saved context
+    int result = waku_stop(wakuCtx, stop_callback, this);
+    
+    if (result == RET_OK) {
+        qDebug() << "==================WakuModulePlugin: Waku stop initiated successfully=======================";
+        return true;
+    } else {
+        qWarning() << "WakuModulePlugin: Failed to stop Waku, error code:" << result;
+        return false;
+    }
+}
+
+bool WakuModulePlugin::getConnectedPeers()
+{
+    qDebug() << "WakuModulePlugin::getConnectedPeers called";
+    
+    if (!wakuCtx) {
+        qWarning() << "WakuModulePlugin: Cannot get connected peers - context not initialized. Call initWaku first.";
+        return false;
+    }
+    
+    // Call waku_get_connected_peers
+    int result = waku_get_connected_peers(wakuCtx, get_connected_peers_callback, this);
+    
+    if (result == RET_OK) {
+        qDebug() << "WakuModulePlugin: Get connected peers initiated successfully";
+        return true;
+    } else {
+        qWarning() << "WakuModulePlugin: Failed to get connected peers, error code:" << result;
+        return false;
+    }
+}
+
+bool WakuModulePlugin::getMetrics()
+{
+    qDebug() << "WakuModulePlugin::getMetrics called";
+    
+    if (!wakuCtx) {
+        qWarning() << "WakuModulePlugin: Cannot get metrics - context not initialized. Call initWaku first.";
+        return false;
+    }
+    
+    // Call waku_get_metrics
+    int result = waku_get_metrics(wakuCtx, get_metrics_callback, this);
+    
+    if (result == RET_OK) {
+        qDebug() << "WakuModulePlugin: Get metrics initiated successfully";
+        return true;
+    } else {
+        qWarning() << "WakuModulePlugin: Failed to get metrics, error code:" << result;
+        return false;
+    }
+}
