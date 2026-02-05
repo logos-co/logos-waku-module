@@ -249,6 +249,14 @@ extern "C"
                      FFICallBack callback,
                      void *userData);
 
+  int waku_get_mixnode_pool_size(void *ctx,
+                                  FFICallBack callback,
+                                  void *userData);
+
+  int waku_get_lightpush_peers_count(void *ctx,
+                                      FFICallBack callback,
+                                      void *userData);
+
 #ifdef __cplusplus
 }
 #endif

@@ -28,6 +28,8 @@ public:
     Q_INVOKABLE bool getConnectedPeers() override;
     Q_INVOKABLE bool getMetrics() override;
     Q_INVOKABLE bool lightPublish(const QString &pubSubTopic, const QString &jsonWakuMessage) override;
+    Q_INVOKABLE bool getMixnodePoolSize() override;
+    Q_INVOKABLE bool getLightpushPeersCount() override;
 
     QString name() const override { return "waku_module"; }
     QString version() const override { return "1.0.0"; }
@@ -57,4 +59,6 @@ private:
     static void get_connected_peers_callback(int callerRet, const char *msg, size_t len, void *userData);
     static void get_metrics_callback(int callerRet, const char *msg, size_t len, void *userData);
     static void light_publish_callback(int callerRet, const char *msg, size_t len, void *userData);
+    static void get_mixnode_pool_size_callback(int callerRet, const char *msg, size_t len, void *userData);
+    static void get_lightpush_peers_count_callback(int callerRet, const char *msg, size_t len, void *userData);
 };

@@ -19,6 +19,8 @@ public:
     Q_INVOKABLE virtual bool getConnectedPeers() = 0;
     Q_INVOKABLE virtual bool getMetrics() = 0;
     Q_INVOKABLE virtual bool lightPublish(const QString &pubSubTopic, const QString &jsonWakuMessage) = 0;
+    Q_INVOKABLE virtual bool getMixnodePoolSize() = 0;
+    Q_INVOKABLE virtual bool getLightpushPeersCount() = 0;
 
 signals:
     // for now this is required for events, later it might not be necessary if using a proxy

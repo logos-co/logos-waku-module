@@ -542,3 +542,105 @@ bool WakuModulePlugin::getMetrics()
         return false;
     }
 }
+
+void WakuModulePlugin::get_mixnode_pool_size_callback(int callerRet, const char *msg, size_t len, void *userData)
+{
+    qDebug() << "WakuModulePlugin::get_mixnode_pool_size_callback called with ret:" << callerRet;
+
+    WakuModulePlugin *plugin = static_cast<WakuModulePlugin *>(userData);
+    if (!plugin)
+    {
+        qWarning() << "WakuModulePlugin::get_mixnode_pool_size_callback: Invalid userData";
+        return;
+    }
+
+    if (msg && len > 0)
+    {
+        QString message = QString::fromUtf8(msg, len);
+        qDebug() << "WakuModulePlugin::get_mixnode_pool_size_callback message:" << message;
+
+        // Create event data with the mixnode pool size result
+        QVariantList eventData;
+        eventData << message;
+        eventData << QDateTime::currentDateTime().toString(Qt::ISODate);
+
+        // Trigger event using emitEvent helper
+        plugin->emitEvent("mixnodePoolSizeResponse", eventData);
+    }
+}
+
+void WakuModulePlugin::get_lightpush_peers_count_callback(int callerRet, const char *msg, size_t len, void *userData)
+{
+    qDebug() << "WakuModulePlugin::get_lightpush_peers_count_callback called with ret:" << callerRet;
+
+    WakuModulePlugin *plugin = static_cast<WakuModulePlugin *>(userData);
+    if (!plugin)
+    {
+        qWarning() << "WakuModulePlugin::get_lightpush_peers_count_callback: Invalid userData";
+        return;
+    }
+
+    if (msg && len > 0)
+    {
+        QString message = QString::fromUtf8(msg, len);
+        qDebug() << "WakuModulePlugin::get_lightpush_peers_count_callback message:" << message;
+
+        // Create event data with the lightpush peers count result
+        QVariantList eventData;
+        eventData << message;
+        eventData << QDateTime::currentDateTime().toString(Qt::ISODate);
+
+        // Trigger event using emitEvent helper
+        plugin->emitEvent("lightpushPeersCountResponse", eventData);
+    }
+}
+
+bool WakuModulePlugin::getMixnodePoolSize()
+{
+    qDebug() << "WakuModulePlugin::getMixnodePoolSize called";
+
+    if (!wakuCtx)
+    {
+        qWarning() << "WakuModulePlugin: Cannot get mixnode pool size - context not initialized. Call initWaku first.";
+        return false;
+    }
+
+    // Call waku_get_mixnode_pool_size
+    int result = waku_get_mixnode_pool_size(wakuCtx, get_mixnode_pool_size_callback, this);
+
+    if (result == RET_OK)
+    {
+        qDebug() << "WakuModulePlugin: Get mixnode pool size initiated successfully";
+        return true;
+    }
+    else
+    {
+        qWarning() << "WakuModulePlugin: Failed to get mixnode pool size, error code:" << result;
+        return false;
+    }
+}
+
+bool WakuModulePlugin::getLightpushPeersCount()
+{
+    qDebug() << "WakuModulePlugin::getLightpushPeersCount called";
+
+    if (!wakuCtx)
+    {
+        qWarning() << "WakuModulePlugin: Cannot get lightpush peers count - context not initialized. Call initWaku first.";
+        return false;
+    }
+
+    // Call waku_get_lightpush_peers_count
+    int result = waku_get_lightpush_peers_count(wakuCtx, get_lightpush_peers_count_callback, this);
+
+    if (result == RET_OK)
+    {
+        qDebug() << "WakuModulePlugin: Get lightpush peers count initiated successfully";
+        return true;
+    }
+    else
+    {
+        qWarning() << "WakuModulePlugin: Failed to get lightpush peers count, error code:" << result;
+        return false;
+    }
+}
