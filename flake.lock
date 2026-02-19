@@ -5,22 +5,23 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1761230734,
-        "narHash": "sha256-CMRUwXH7pJZ1OI6bd/TDDDXKqQ1tQZHQEOOwK8TgYHI=",
+        "lastModified": 1770978598,
+        "narHash": "sha256-CR5N5v+y2ZInnBocGgjIeLaS9XqNjAKGXE2abC3E110=",
         "owner": "logos-co",
         "repo": "logos-cpp-sdk",
-        "rev": "4b143922c190df00bb3835441c9f0075cb28283b",
+        "rev": "c3477d29e32cae5f73ca637fb81e547f8a6cba58",
         "type": "github"
       },
       "original": {
         "owner": "logos-co",
+        "ref": "feat/logos-result",
         "repo": "logos-cpp-sdk",
         "type": "github"
       }
     },
     "logos-cpp-sdk_2": {
       "inputs": {
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs_3"
       },
       "locked": {
         "lastModified": 1761230734,
@@ -34,6 +35,27 @@
         "owner": "logos-co",
         "repo": "logos-cpp-sdk",
         "type": "github"
+      }
+    },
+    "logos-delivery": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2",
+        "zerokit": "zerokit"
+      },
+      "locked": {
+        "lastModified": 1771476977,
+        "narHash": "sha256-8kwwZIcY/lGrmKTD+RO04+l2xYnkaP9vkLV+A0MUtN4=",
+        "ref": "refs/heads/master",
+        "rev": "335600ebcb95a34f85a1e3c22d6cc736abc7559f",
+        "revCount": 2223,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/logos-messaging/logos-delivery"
+      },
+      "original": {
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/logos-messaging/logos-delivery"
       }
     },
     "logos-liblogos": {
@@ -77,6 +99,22 @@
     },
     "nixpkgs_2": {
       "locked": {
+        "lastModified": 1757590060,
+        "narHash": "sha256-EWwwdKLMZALkgHFyKW7rmyhxECO74+N+ZO5xTDnY/5c=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "0ef228213045d2cdb5a169a95d63ded38670b293",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "0ef228213045d2cdb5a169a95d63ded38670b293",
+        "type": "github"
+      }
+    },
+    "nixpkgs_3": {
+      "locked": {
         "lastModified": 1759036355,
         "narHash": "sha256-0m27AKv6ka+q270dw48KflE0LwQYrO7Fm4/2//KCVWg=",
         "owner": "NixOS",
@@ -94,11 +132,57 @@
     "root": {
       "inputs": {
         "logos-cpp-sdk": "logos-cpp-sdk",
+        "logos-delivery": "logos-delivery",
         "logos-liblogos": "logos-liblogos",
         "nixpkgs": [
           "logos-liblogos",
           "nixpkgs"
         ]
+      }
+    },
+    "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "logos-delivery",
+          "zerokit",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1748399823,
+        "narHash": "sha256-kahD8D5hOXOsGbNdoLLnqCL887cjHkx98Izc37nDjlA=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "d68a69dc71bc19beb3479800392112c2f6218159",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "zerokit": {
+      "inputs": {
+        "nixpkgs": [
+          "logos-delivery",
+          "nixpkgs"
+        ],
+        "rust-overlay": "rust-overlay"
+      },
+      "locked": {
+        "lastModified": 1762211504,
+        "narHash": "sha256-SbDoBElFYJ4cYebltxlO2lYnz6qOaDAVY6aNJ5bqHDE=",
+        "ref": "refs/heads/master",
+        "rev": "3160d9504d07791f2fc9b610948a6cf9a58ed488",
+        "revCount": 342,
+        "type": "git",
+        "url": "https://github.com/vacp2p/zerokit"
+      },
+      "original": {
+        "rev": "3160d9504d07791f2fc9b610948a6cf9a58ed488",
+        "type": "git",
+        "url": "https://github.com/vacp2p/zerokit"
       }
     }
   },

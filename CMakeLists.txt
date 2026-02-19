@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.14)
 project(WakuModulePlugin LANGUAGES CXX)
 
+# Require C++20
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 include(GNUInstallDirs)
 
 set(CMAKE_AUTOMOC ON)
@@ -38,6 +43,10 @@ if(NOT DEFINED LOGOS_CPP_SDK_ROOT)
     endif()
 endif()
 
+if(NOT DEFINED LOGOS_DELIVERY_ROOT)
+    set(LOGOS_DELIVERY_ROOT "$ENV{LOGOS_DELIVERY_ROOT}")
+endif()
+
 # Check if dependencies are available (support both source and installed layouts)
 set(_liblogos_found FALSE)
 if(EXISTS "${LOGOS_LIBLOGOS_ROOT}/interface.h")
@@ -65,11 +74,6 @@ endif()
 if(NOT _cpp_sdk_found)
     message(FATAL_ERROR "logos-cpp-sdk not found at ${LOGOS_CPP_SDK_ROOT}. "
                         "Set LOGOS_CPP_SDK_ROOT or run git submodule update --init --recursive.")
-endif()
-
-set(NWAKU_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/nwaku")
-if(NOT EXISTS "${NWAKU_ROOT}/Makefile")
-    message(WARNING "nwaku vendor not found. You may need to run git submodule update --init --recursive if building libwaku from source.")
 endif()
 
 # Root that contains the vendored dependencies (logos-core checkout or script vendor directory)
@@ -124,16 +128,15 @@ else()
     )
 endif()
 
-set(LIBWAKU_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+set(LIBWAKU_DIR "${LOGOS_DELIVERY_ROOT}/bin")
 # Prioritize platform-specific library names
 if(APPLE)
-    set(LIBWAKU_NAMES libwaku.dylib libwaku.so libwaku.dll waku.dll)
+    set(LIBWAKU_NAMES libwaku.dylib libwaku.so)
 elseif(WIN32)
-    set(LIBWAKU_NAMES libwaku.dll waku.dll libwaku.dylib libwaku.so)
+    set(LIBWAKU_NAMES libwaku.dll libwaku.dylib libwaku.so)
 else()
-    set(LIBWAKU_NAMES libwaku.so libwaku.dylib libwaku.dll waku.dll)
+    set(LIBWAKU_NAMES libwaku.so)
 endif()
-# Always add lib directory and try to link -lwaku; also keep optional direct path if present
 find_library(LIBWAKU_PATH NAMES ${LIBWAKU_NAMES} PATHS ${LIBWAKU_DIR} NO_DEFAULT_PATH)
 
 # Plugin sources
@@ -202,6 +205,17 @@ target_include_directories(waku_module_plugin PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${LIBWAKU_DIR}
 )
+
+# Look for libwaku.h in logos-delivery
+if(EXISTS "${LOGOS_DELIVERY_ROOT}/include/libwaku.h")
+    target_include_directories(waku_module_plugin PRIVATE ${LOGOS_DELIVERY_ROOT}/include)
+elseif(EXISTS "${LOGOS_DELIVERY_ROOT}/libwaku/libwaku.h")
+    target_include_directories(waku_module_plugin PRIVATE ${LOGOS_DELIVERY_ROOT}/libwaku)
+elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/logos-delivery/library/libwaku.h")
+    # Fallback: use vendored logos-delivery submodule header
+    target_include_directories(waku_module_plugin PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/vendor/logos-delivery/library)
+endif()
 
 # Add include directories based on layout type
 if(_liblogos_is_source)
