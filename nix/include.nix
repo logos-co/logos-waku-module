@@ -1,25 +1,25 @@
 # Generates headers from the waku module plugin using logos-cpp-generator
-{ pkgs, common, src, lib, logosSdk }:
+{ pkgs, common, src, lib, logosSdk, logosDelivery }:
 
 pkgs.stdenv.mkDerivation {
   pname = "${common.pname}-headers";
   version = common.version;
-  
+
   inherit src;
   inherit (common) meta;
-  
+
   # We need the generator and the built plugin
   nativeBuildInputs = [ logosSdk ];
-  
+
   # No configure phase needed
   dontConfigure = true;
-  
+
   buildPhase = ''
     runHook preBuild
-    
+
     # Create output directory for generated headers
     mkdir -p ./generated_headers
-    
+
     # Determine platform-specific library extension
     if [ -f "${lib}/lib/waku_module_plugin.dylib" ]; then
       PLUGIN_FILE="${lib}/lib/waku_module_plugin.dylib"
@@ -29,14 +29,14 @@ pkgs.stdenv.mkDerivation {
       echo "Error: No waku_module_plugin library file found"
       exit 1
     fi
-    
+
     # Set library path so the plugin can find libwaku when loaded
     if [ "$(uname -s)" = "Darwin" ]; then
       export DYLD_LIBRARY_PATH="${lib}/lib:''${DYLD_LIBRARY_PATH:-}"
     else
       export LD_LIBRARY_PATH="${lib}/lib:''${LD_LIBRARY_PATH:-}"
     fi
-    
+
     # Run logos-cpp-generator on the built plugin with --module-only flag
     echo "Running logos-cpp-generator on $PLUGIN_FILE"
     echo "Library path: ${lib}/lib"
@@ -46,16 +46,16 @@ pkgs.stdenv.mkDerivation {
       # Create a marker file to indicate attempt was made
       touch ./generated_headers/.no-api
     }
-    
+
     runHook postBuild
   '';
-  
+
   installPhase = ''
     runHook preInstall
-    
+
     # Install generated headers
     mkdir -p $out/include
-    
+
     # Copy all generated files to include/ if they exist
     if [ -d ./generated_headers ] && [ "$(ls -A ./generated_headers 2>/dev/null)" ]; then
       echo "Copying generated headers..."
@@ -66,7 +66,19 @@ pkgs.stdenv.mkDerivation {
       # Create a placeholder file to indicate headers should be generated from metadata
       echo "# Generated headers from metadata.json" > $out/include/.generated
     fi
-    
+
+    # Copy libwaku.h from logos-delivery
+    echo "Copying libwaku.h from logos-delivery..."
+    if [ -d "${logosDelivery}/include" ]; then
+      echo "Found include directory in logos-delivery"
+      cp -r "${logosDelivery}/include"/* $out/include/
+    else
+      echo "Warning: No include directory found in logos-delivery"
+    fi
+
+    echo "Copied include files:"
+    ls -la $out/include/
+
     runHook postInstall
   '';
 }

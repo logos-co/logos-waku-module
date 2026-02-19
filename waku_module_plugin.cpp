@@ -270,8 +270,8 @@ bool WakuModulePlugin::setEventCallback()
         return false;
     }
     
-    // Set the event callback using waku_set_event_callback
-    waku_set_event_callback(wakuCtx, event_callback, this);
+    // Set the event callback using set_event_callback
+    set_event_callback(wakuCtx, event_callback, this);
     
     qDebug() << "WakuModulePlugin: Event callback set successfully";
     return true;
@@ -290,7 +290,7 @@ bool WakuModulePlugin::relaySubscribe(const QString &pubSubTopic)
     QByteArray topicUtf8 = pubSubTopic.toUtf8();
     
     // Call waku_relay_subscribe with the pubsub topic
-    int result = waku_relay_subscribe(wakuCtx, topicUtf8.constData(), relay_subscribe_callback, this);
+    int result = waku_relay_subscribe(wakuCtx, relay_subscribe_callback, this, topicUtf8.constData());
     
     if (result == RET_OK) {
         qDebug() << "WakuModulePlugin: Relay subscribe initiated successfully for topic:" << pubSubTopic;
@@ -316,7 +316,7 @@ bool WakuModulePlugin::relayPublish(const QString &pubSubTopic, const QString &j
     QByteArray messageUtf8 = jsonWakuMessage.toUtf8();
     
     // Call waku_relay_publish with hardcoded timeout of 10000ms
-    int result = waku_relay_publish(wakuCtx, topicUtf8.constData(), messageUtf8.constData(), 10000, relay_publish_callback, this);
+    int result = waku_relay_publish(wakuCtx, relay_publish_callback, this, topicUtf8.constData(), messageUtf8.constData(), 10000);
     
     if (result == RET_OK) {
         qDebug() << "WakuModulePlugin: Relay publish initiated successfully for topic:" << pubSubTopic;
@@ -342,7 +342,7 @@ bool WakuModulePlugin::filterSubscribe(const QString &pubSubTopic, const QString
     QByteArray contentTopicsUtf8 = contentTopics.toUtf8();
     
     // Call waku_filter_subscribe
-    int result = waku_filter_subscribe(wakuCtx, topicUtf8.constData(), contentTopicsUtf8.constData(), filter_subscribe_callback, this);
+    int result = waku_filter_subscribe(wakuCtx, filter_subscribe_callback, this, topicUtf8.constData(), contentTopicsUtf8.constData());
     
     if (result == RET_OK) {
         qDebug() << "WakuModulePlugin: Filter subscribe initiated successfully for topic:" << pubSubTopic;
@@ -368,7 +368,7 @@ bool WakuModulePlugin::storeQuery(const QString &jsonQuery, const QString &peerA
     QByteArray peerAddrUtf8 = peerAddr.toUtf8();
     
     // Call waku_store_query with hardcoded timeout of 30000ms
-    int result = waku_store_query(wakuCtx, queryUtf8.constData(), peerAddrUtf8.constData(), 30000, store_query_callback, this);
+    int result = waku_store_query(wakuCtx, store_query_callback, this, queryUtf8.constData(), peerAddrUtf8.constData(), 30000);
     
     if (result == RET_OK) {
         qDebug() << "WakuModulePlugin: Store query initiated successfully for peer:" << peerAddr;

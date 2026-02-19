@@ -2,6 +2,9 @@
 build
 .deps/
 vendor/*
+!vendor/logos-delivery
+!vendor/logos-liblogos
+!vendor/logos-cpp-sdk
 result
 result/
 cmake-build-*
