@@ -58,6 +58,7 @@ pkgs.stdenv.mkDerivation {
     # Ensure Linux runtime lookup can find adjacent shared libraries
     ${pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
       if [ -f "$out/lib/''${libwakuLib}" ]; then
+        chmod 755 -R $out/lib
         ${pkgs.patchelf}/bin/patchelf --set-rpath '$ORIGIN' "$out/lib/''${libwakuLib}"
         ${pkgs.patchelf}/bin/patchelf --add-needed libpq.so.5 "$out/lib/''${libwakuLib}" 2>/dev/null || true
       fi
