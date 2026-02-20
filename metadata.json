@@ -7,7 +7,15 @@
   "category": "protocol",
   "main": "waku_module_plugin",
   "dependencies": [],
-  "include": ["libwaku.so", "libwaku.dylib", "libwaku.dll"],
+  "include": [
+    "libwaku.so", 
+    "libwaku.dylib", 
+    "libwaku.dll", 
+    "libpq.so", 
+    "libpq.so.5", 
+    "libpq.dylib", 
+    "libpq.5.dylib", 
+    "libpq.dll"],
   "capabilities": [
   ]
 } 
