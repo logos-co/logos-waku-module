@@ -10,7 +10,7 @@
     # Uses git+https (not github:) because the build needs submodules,
     # and github: type fetches tarballs which don't include submodule content.
     logos-messaging-nim = {
-      url = "git+https://github.com/logos-messaging/logos-messaging-nim?ref=poc/logos-testnet-mix&submodules=1";
+      url = "git+https://github.com/logos-messaging/logos-delivery?ref=poc/logos-testnet-mix&submodules=1";
     };
   };
 
