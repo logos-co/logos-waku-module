@@ -1,8 +1,8 @@
 {
-  "name": "waku_module",
+  "name": "waku_module_mix",
   "version": "1.0.1",
-  "description": "Waku module",
-  "author": "Logos Core Team",
+  "description": "Waku module with mix and capability discovery",
+  "author": "Logos AnonComms Team",
   "type": "core",
   "category": "protocol",
   "main": "waku_module_plugin",
