@@ -26,18 +26,7 @@ WakuModulePlugin::~WakuModulePlugin()
 }
 
 void WakuModulePlugin::emitEvent(const QString& eventName, const QVariantList& data) {
-    if (!logosAPI) {
-        qWarning() << "WakuModulePlugin: LogosAPI not available, cannot emit" << eventName;
-        return;
-    }
-
-    LogosAPIClient* client = logosAPI->getClient("waku_module");
-    if (!client) {
-        qWarning() << "WakuModulePlugin: Failed to get waku_module client for event" << eventName;
-        return;
-    }
-
-    client->onEventResponse(this, eventName, data);
+    emit eventResponse(eventName, data);
 }
 
 bool WakuModulePlugin::foo(const QString &bar)
